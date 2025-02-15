@@ -12,6 +12,9 @@ repositories {
 dependencies {
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    implementation ("io.netty:netty-all:4.1.115.Final")
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("org.java-websocket:Java-WebSocket:1.5.1")
 }
 
 tasks.test {

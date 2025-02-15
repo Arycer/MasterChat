@@ -1,25 +1,39 @@
 import { useEffect, useState } from 'react';
+import Header from './components/Header';
+import Sidebar from './components/Sidebar';
+import ChatWindow from './components/ChatWindow';
+import UsernamePrompt from './components/UsernamePrompt';
+import './App.css';
 
 function App() {
+    const [port, setPort] = useState(null);
+    const [activeTab, setActiveTab] = useState('general');
+    const [openTabs, setOpenTabs] = useState(['general']);
     const [messages, setMessages] = useState([]);
+    const [privateMessages, setPrivateMessages] = useState({});
     const [users, setUsers] = useState([]);
-    const [newMessage, setNewMessage] = useState('');
     const [ws, setWs] = useState(null);
+    const [username, setUsername] = useState(null);
+    const [isUsernameRequested, setIsUsernameRequested] = useState(false);
 
-    function sendUsername() {
-        const username = prompt('Ingresa tu nombre de usuario:');
-        const message = {
-            type: 'username_response',
-            content: username
-        }
-        ws.send(JSON.stringify(message));
+    // Obtener el puerto del servidor WebSocket
+    useEffect(() => {
+        const fetchedPort = window.api.getPort();
+        setPort(fetchedPort);
+    }, []);
+
+    function getCurrentTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
     }
 
+    // Conectar al servidor WebSocket
     useEffect(() => {
-        // Conectar al servidor WebSocket local
-        // obtener el puerto de la variable de entrono WS_PORT
+        if (port === null) return;
 
-        const socket = new WebSocket('ws://localhost:8888');
+        const socket = new WebSocket(`ws://localhost:${port}`);
 
         socket.onopen = () => {
             console.log('Conectado al servidor WebSocket');
@@ -29,8 +43,52 @@ function App() {
             const message = JSON.parse(event.data);
             console.log('Mensaje recibido:', message);
 
+            const currTime = getCurrentTime();
+
+            if (message.type === 'chat') {
+                console.log('Mensaje de chat:', message.content);
+                setMessages((prevMessages) => [...prevMessages, { sender: message.sender, text: message.content, time: currTime }]);
+            }
+
+            if (message.type === 'private_chat') {
+                const sender = message.sender;
+                const receiver = message.receiver;
+                const text = message.content;
+                console.log('Mensaje de chat privado:', sender, receiver, text);
+
+                setPrivateMessages((prevMessages) => ({
+                    ...prevMessages,
+                    [receiver]: [...(prevMessages[receiver] || []), { sender, text, currTime }],
+                    [sender]: [...(prevMessages[sender] || []), { sender, text, currTime }],
+                }));
+
+                if (receiver === username) {
+                    setOpenTabs((prevTabs) => {
+                        if (!prevTabs.includes(sender)) {
+                            return [...prevTabs, sender];
+                        }
+                        return prevTabs;
+                    });
+                }
+            }
+
+            if (message.type === 'user_list') {
+                setUsers(message.content.split(','));
+            }
+
             if (message.type === 'username_request') {
-                sendUsername();
+                setIsUsernameRequested(true);
+            }
+
+            if (message.type === 'session') {
+                setUsername(message.content);
+                setIsUsernameRequested(false);
+            }
+
+            if (message.type === 'error') {
+                if (message.content === 'already_existing_username') {
+                    alert('El nombre de usuario ya está en uso. Por favor, elige otro.');
+                }
             }
         };
 
@@ -47,53 +105,59 @@ function App() {
         return () => {
             socket.close();
         };
-    }, []);
+    }, [port, username]);
 
-    const handleSendMessage = () => {
-        if (ws && newMessage.trim()) {
-            // Enviar mensaje al servidor WebSocket
-            ws.send(`chat_message:${newMessage}`);
-            setNewMessage('');
+    const sendUsername = (username) => {
+        if (ws) {
+            ws.send(JSON.stringify({ type: 'username_response', content: username }));
         }
     };
 
-    const handleMessageChange = (event) => {
-        setNewMessage(event.target.value);
+    const openPrivateChat = (name) => {
+        if (name === username) return;
+
+        if (!openTabs.includes(name)) {
+            setOpenTabs((prevTabs) => [...prevTabs, name]);
+        }
+        setActiveTab(name);
     };
 
-    const handleKeyPress = (event) => {
-        if (event.key === 'Enter') {
-            handleSendMessage();
+    const closeChat = (tab) => {
+        if (tab === 'general') return;
+        setOpenTabs((prevTabs) => prevTabs.filter((t) => t !== tab));
+        if (activeTab === tab) {
+            setActiveTab('general');
         }
     };
+
+    if (!username) {
+        return (
+            <div className="app">
+                {isUsernameRequested ? (
+                    <UsernamePrompt onUsernameSubmit={sendUsername} />
+                ) : (
+                    <div className="loading">Conectando...</div>
+                )}
+            </div>
+        );
+    }
 
     return (
-        <div className="chat-container">
-            <h2>Usuarios Conectados</h2>
-            <ul>
-                {users.map((user, index) => (
-                    <li key={index}>{user}</li>
-                ))}
-            </ul>
-
-            <h2>Mensajes</h2>
-            <div className="messages">
-                {messages.map((message, index) => (
-                    <div key={index} className="message">
-                        {message}
-                    </div>
-                ))}
-            </div>
-
-            <div className="message-input">
-                <input
-                    type="text"
-                    value={newMessage}
-                    onChange={handleMessageChange}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Escribe un mensaje..."
+        <div className="app">
+            <Header
+                activeTab={activeTab}
+                openTabs={openTabs}
+                onTabClick={setActiveTab}
+                onCloseTab={closeChat}
+            />
+            <div className="main-content">
+                <Sidebar users={users} onUserClick={openPrivateChat} currentUser={username} />
+                <ChatWindow
+                    activeTab={activeTab}
+                    messages={activeTab === 'general' ? messages : privateMessages[activeTab] || []}
+                    ws={ws}
+                    username={username}
                 />
-                <button onClick={handleSendMessage}>Enviar</button>
             </div>
         </div>
     );

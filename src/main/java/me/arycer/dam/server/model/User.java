@@ -1,4 +1,4 @@
-package me.arycer.dam.client.model;
+package me.arycer.dam.server.model;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -11,7 +11,6 @@ public class User {
         this.ctx = ctx;
     }
 
-    // Getters y Setters
     public String getUsername() {
         return username;
     }
