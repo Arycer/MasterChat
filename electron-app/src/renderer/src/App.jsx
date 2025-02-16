@@ -1,8 +1,9 @@
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ChatWindow from './components/ChatWindow';
 import UsernamePrompt from './components/UsernamePrompt';
+import notificationSoundFile from './assets/notification.mp3'; // Agrega un sonido en esta ruta
 import './App.css';
 
 function App() {
@@ -16,6 +17,8 @@ function App() {
   const [ws, setWs] = useState(null);
   const [username, setUsername] = useState(null);
   const [isUsernameRequested, setIsUsernameRequested] = useState(false);
+
+  const notificationSound = new Audio(notificationSoundFile);
 
   useEffect(() => {
     const fetchedPort = window.api.getPort();
@@ -67,8 +70,8 @@ function App() {
 
         setPrivateMessages((prevMessages) => ({
           ...prevMessages,
-          [receiver]: [...(prevMessages[receiver] || []), {sender, text, time: currTime}],
-          [sender]: [...(prevMessages[sender] || []), {sender, text, time: currTime}],
+          [receiver]: [...(prevMessages[receiver] || []), { sender, text, time: currTime }],
+          [sender]: [...(prevMessages[sender] || []), { sender, text, time: currTime }],
         }));
 
         if (receiver === username) {
@@ -79,10 +82,14 @@ function App() {
             return prevTabs;
           });
 
-          setUnreadMessages((prevUnread) => ({
-            ...prevUnread,
-            [sender]: (prevUnread[sender] || 0) + 1,
-          }));
+          if (activeTab !== sender) {
+            setUnreadMessages((prevUnread) => ({
+              ...prevUnread,
+              [sender]: (prevUnread[sender] || 0) + 1,
+            }));
+
+            notificationSound.play();
+          }
         }
       }
 
@@ -117,11 +124,11 @@ function App() {
     return () => {
       socket.close();
     };
-  }, [port, username]);
+  }, [port, username, activeTab]);
 
   const sendUsername = (username) => {
     if (ws) {
-      ws.send(JSON.stringify({type: 'username_response', content: username}));
+      ws.send(JSON.stringify({ type: 'username_response', content: username }));
     }
   };
 
@@ -151,7 +158,7 @@ function App() {
     return (
       <div className="app">
         {isUsernameRequested ? (
-          <UsernamePrompt onUsernameSubmit={sendUsername}/>
+          <UsernamePrompt onUsernameSubmit={sendUsername} />
         ) : (
           <div className="loading">Conectando...</div>
         )}
@@ -169,7 +176,7 @@ function App() {
         onCloseTab={closeChat}
       />
       <div className="main-content">
-        <Sidebar users={users} onUserClick={openPrivateChat} currentUser={username}/>
+        <Sidebar users={users} onUserClick={openPrivateChat} currentUser={username} />
         <ChatWindow
           activeTab={activeTab}
           messages={activeTab === 'general' ? messages : privateMessages[activeTab] || []}

@@ -1,7 +1,9 @@
-import {useState} from 'react';
+import { useState } from 'react';
 
-function ChatWindow({activeTab, messages, ws, username}) {
+function ChatWindow({ activeTab, messages, ws, username }) {
   const [inputText, setInputText] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   const handleSendMessage = () => {
     if (inputText.trim() && ws) {
@@ -21,11 +23,28 @@ function ChatWindow({activeTab, messages, ws, username}) {
     const urlRegex = /(https?:\/\/\S+)/gi;
     return content.split(urlRegex).map((part, index) => {
       if (part.match(urlRegex) && part.includes('http')) {
-        return <img key={index} src={part} alt="Imagen enviada" className="chat-image"
-                    onError={(e) => e.target.style.display = 'none'}/>;
+        return (
+          <img
+            key={index}
+            src={part}
+            alt="Imagen enviada"
+            className="chat-image"
+            onClick={() => setSelectedImage(part)}
+            onError={(e) => e.target.style.display = 'none'}
+            style={{ cursor: 'pointer', maxWidth: '200px', maxHeight: '200px' }}
+          />
+        );
       }
       return <span key={index}>{part}</span>;
     });
+  };
+
+  const handleCloseImage = () => {
+    setIsFadingOut(true);
+    setTimeout(() => {
+      setSelectedImage(null);
+      setIsFadingOut(false);
+    }, 500);
   };
 
   return (
@@ -49,6 +68,17 @@ function ChatWindow({activeTab, messages, ws, username}) {
         />
         <button onClick={handleSendMessage}>Enviar</button>
       </div>
+      {selectedImage && (
+        <div className="image-modal" onClick={handleCloseImage}>
+          <img
+            src={selectedImage}
+            alt="Imagen ampliada"
+            className={`large-image fade-zoom ${isFadingOut ? 'fade-out' : ''}`}
+            onAnimationEnd={() => isFadingOut && setSelectedImage(null)}
+          />
+        </div>
+      )}
+
     </div>
   );
 }
