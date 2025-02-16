@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import {useState} from 'react';
 
-function ChatWindow({ activeTab, messages, ws, username }) {
+function ChatWindow({activeTab, messages, ws, username}) {
   const [inputText, setInputText] = useState('');
 
   const handleSendMessage = () => {
@@ -16,12 +16,25 @@ function ChatWindow({ activeTab, messages, ws, username }) {
     }
   };
 
+  const parseMessageContent = (content) => {
+    if (!content || typeof content !== 'string') return <span>(Mensaje vacío)</span>;
+    const urlRegex = /(https?:\/\/\S+)/gi;
+    return content.split(urlRegex).map((part, index) => {
+      if (part.match(urlRegex) && part.includes('http')) {
+        return <img key={index} src={part} alt="Imagen enviada" className="chat-image"
+                    onError={(e) => e.target.style.display = 'none'}/>;
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
   return (
     <div className="chat-window">
       <div className="messages">
         {messages.map((msg, index) => (
           <div key={index} className="message">
-            <strong>{msg.sender}:</strong> {msg.text}
+            <strong>{msg.sender}:</strong>
+            <div>{parseMessageContent(msg.text)}</div>
             <span className="message-time">{msg.time}</span>
           </div>
         ))}

@@ -1,4 +1,4 @@
-function Header({ activeTab, openTabs, onTabClick, onCloseTab }) {
+function Header({activeTab, openTabs, unreadMessages, onTabClick, onCloseTab}) {
   return (
     <div className="header">
       {openTabs.map((tab) => (
@@ -7,9 +7,12 @@ function Header({ activeTab, openTabs, onTabClick, onCloseTab }) {
           className={`tab ${activeTab === tab ? 'active' : ''}`}
           onClick={() => onTabClick(tab)}
         >
-          {tab}
+          {tab} {unreadMessages[tab] > 0 && <span className="unread-count">({unreadMessages[tab]})</span>}
           {tab !== 'general' && (
-            <button className="close-tab" onClick={(e) => { e.stopPropagation(); onCloseTab(tab); }}>
+            <button className="close-tab" onClick={(e) => {
+              e.stopPropagation();
+              onCloseTab(tab);
+            }}>
               &times;
             </button>
           )}

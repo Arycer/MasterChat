@@ -219,7 +219,13 @@
 }
 
 .message-time {
-  margin-left: 10px;
   font-size: 0.8rem;
   color: #666;
+}
+
+.chat-image {
+  max-width: 80%;
+  max-height: 200px;
+  display: block;
+  margin-top: 5px;
 }

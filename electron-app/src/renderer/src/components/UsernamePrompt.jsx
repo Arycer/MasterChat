@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import {useState} from 'react';
 
-function UsernamePrompt({ onUsernameSubmit }) {
+function UsernamePrompt({onUsernameSubmit}) {
   const [username, setUsername] = useState('');
 
   const handleSubmit = (e) => {

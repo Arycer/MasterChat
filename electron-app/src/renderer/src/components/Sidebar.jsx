@@ -1,4 +1,4 @@
-function Sidebar({ users, onUserClick, currentUser }) {
+function Sidebar({users, onUserClick, currentUser}) {
   return (
     <div className="sidebar">
       <h3>Usuarios Conectados</h3>
