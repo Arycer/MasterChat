@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import {useEffect, useRef, useState} from 'react';
 import './ChatWindow.css'; // Importar los estilos
 
 function ChatWindow({ activeTab, messages, ws, username }) {

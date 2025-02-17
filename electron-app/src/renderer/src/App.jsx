@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ChatWindow from './components/ChatWindow';
@@ -20,8 +20,8 @@ function App() {
 
   const notificationSound = new Audio(notificationSoundFile);
 
-  useEffect(() => {
-    const fetchedPort = window.api.getPort();
+  useEffect(async () => {
+    const fetchedPort = await window.api.getPort();
     setPort(fetchedPort);
   }, []);
 

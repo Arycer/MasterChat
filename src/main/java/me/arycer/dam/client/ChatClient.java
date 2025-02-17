@@ -2,35 +2,36 @@ package me.arycer.dam.client;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
-import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import me.arycer.dam.client.model.ChatModel;
 import me.arycer.dam.client.network.ChatClientHandler;
 import me.arycer.dam.client.ws.LocalWebSocketServer;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.ServerSocket;
-
 public class ChatClient {
     private static final String HOST = "5.tcp.eu.ngrok.io";
     private static final int PORT = 18881;
 
     public static void main(String[] args) throws Exception {
+        if (args.length != 1) {
+            System.err.println("Uso: java -jar ChatClient.jar <puerto_websocket>");
+            System.exit(1);
+        }
+
         ChatModel model = new ChatModel();
-        int webSocketPort = getAvailablePort();
+        int webSocketPort = Integer.parseInt(args[0]);
 
         LocalWebSocketServer webSocketServer = new LocalWebSocketServer(webSocketPort, model);
         webSocketServer.start();
         model.setWebSocketServer(webSocketServer);
-
-        startElectronApp(webSocketPort);
 
         EventLoopGroup group = new NioEventLoopGroup();
 
@@ -56,39 +57,4 @@ public class ChatClient {
             webSocketServer.stop();
         }
     }
-
-    private static int getAvailablePort() {
-        try (ServerSocket socket = new ServerSocket(0)) {
-            return socket.getLocalPort();
-        } catch (IOException e) {
-            throw new RuntimeException("No se pudo encontrar un puerto disponible.", e);
-        }
-    }
-
-    private static void startElectronApp(int webSocketPort) {
-        try {
-            String electronAppPath = "electron-app";
-            File dir = new File(electronAppPath);
-
-            ProcessBuilder processBuilder = new ProcessBuilder("npm", "start");
-            processBuilder.environment().put("WS_PORT", String.valueOf(webSocketPort));
-            processBuilder.directory(dir);
-
-            processBuilder.redirectErrorStream(true);
-            Process electronProcess = processBuilder.start();
-
-            new Thread(() -> {
-                try {
-                    electronProcess.waitFor();
-                    System.out.println("Terminando ejecución...");
-                    System.exit(0);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }).start();
-
-            System.out.println("Aplicación Electron iniciada en el puerto WebSocket: " + webSocketPort);
-        } catch (IOException e) {
-            System.err.println("Error al iniciar la aplicación Electron: " + e.getMessage());
-        }
-    }}
+}
