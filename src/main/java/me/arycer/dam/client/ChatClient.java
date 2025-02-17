@@ -20,8 +20,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 public class ChatClient {
-    private static final String HOST = "localhost";
-    private static final int PORT = 8080;
+    private static final String HOST = "7.tcp.eu.ngrok.io";
+    private static final int PORT = 10729;
 
     public static void main(String[] args) throws Exception {
         ChatModel model = new ChatModel();
