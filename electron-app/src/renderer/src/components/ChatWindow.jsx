@@ -1,9 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import './ChatWindow.css'; // Importar los estilos
 
 function ChatWindow({ activeTab, messages, ws, username }) {
   const [inputText, setInputText] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const messagesEndRef = useRef(null); // Ref para el final del chat
+
+  // Efecto para desplazar el scroll al final al actualizar los mensajes
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
 
   const handleSendMessage = () => {
     if (inputText.trim() && ws) {
@@ -31,7 +40,6 @@ function ChatWindow({ activeTab, messages, ws, username }) {
             className="chat-image"
             onClick={() => setSelectedImage(part)}
             onError={(e) => e.target.style.display = 'none'}
-            style={{ cursor: 'pointer', maxWidth: '200px', maxHeight: '200px' }}
           />
         );
       }
@@ -44,19 +52,29 @@ function ChatWindow({ activeTab, messages, ws, username }) {
     setTimeout(() => {
       setSelectedImage(null);
       setIsFadingOut(false);
-    }, 500);
+    }, 250);
   };
 
   return (
     <div className="chat-window">
       <div className="messages">
         {messages.map((msg, index) => (
-          <div key={index} className="message">
-            <strong>{msg.sender}:</strong>
+          <div
+            key={index}
+            className={`message ${msg.sender === username ? 'own-message' : 'other-message'}`}
+          >
+            {
+              msg.sender === username ?
+                <strong>Tú:</strong> :
+                <strong>{msg.sender}:</strong>
+            }
+
             <div>{parseMessageContent(msg.text)}</div>
             <span className="message-time">{msg.time}</span>
           </div>
         ))}
+        {/* Este div asegura que el scroll se mantenga al final */}
+        <div ref={messagesEndRef} />
       </div>
       <div className="input-area">
         <input
@@ -73,12 +91,10 @@ function ChatWindow({ activeTab, messages, ws, username }) {
           <img
             src={selectedImage}
             alt="Imagen ampliada"
-            className={`large-image fade-zoom ${isFadingOut ? 'fade-out' : ''}`}
-            onAnimationEnd={() => isFadingOut && setSelectedImage(null)}
+            className={`large-image ${isFadingOut ? 'fade-out' : ''}`}
           />
         </div>
       )}
-
     </div>
   );
 }
