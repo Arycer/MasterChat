@@ -1,10 +1,12 @@
 package me.arycer.dam.client;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
@@ -17,8 +19,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 public class ChatClient {
-    private static final String HOST = "localhost";
-    private static final int PORT = 8080;
+    private static final String HOST = "5.tcp.eu.ngrok.io";
+    private static final int PORT = 18881;
 
     public static void main(String[] args) throws Exception {
         ChatModel model = new ChatModel();
@@ -40,7 +42,7 @@ public class ChatClient {
                         @Override
                         protected void initChannel(SocketChannel ch) {
                             ChannelPipeline pipeline = ch.pipeline();
-                            pipeline.addLast(new LineBasedFrameDecoder(8192));
+                            pipeline.addLast(new DelimiterBasedFrameDecoder(32768, Unpooled.wrappedBuffer(new byte[]{'\n'})));
                             pipeline.addLast(new StringDecoder());
                             pipeline.addLast(new StringEncoder());
                             pipeline.addLast(new ChatClientHandler(model));
