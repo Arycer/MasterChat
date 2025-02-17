@@ -74,7 +74,10 @@ app.whenReady().then(async () => {
   })
 
   const port = await findAvailablePort(3000); // Busca un puerto libre a partir del 3000
-  const jarPath = path.join(app.getAppPath(), "resources", "ChatClient-1.0-SNAPSHOT.jar");
+  const jarPath = is.dev
+    ? path.join(__dirname, "../../resources/ChatClient-1.0-SNAPSHOT.jar")  // Ruta en desarrollo
+    : path.join(process.resourcesPath, "resources", "ChatClient-1.0-SNAPSHOT.jar"); // Ruta en producción
+
   const javaProcess = spawn("java", ["-jar", jarPath, port.toString()], {
     stdio: ["pipe", "pipe", "pipe"],
   });
