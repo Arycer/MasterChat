@@ -16,18 +16,21 @@ import me.arycer.dam.client.model.ChatModel;
 import me.arycer.dam.client.network.ChatClientHandler;
 import me.arycer.dam.client.ws.LocalWebSocketServer;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+
 public class ChatClient {
     private static final String HOST = "5.tcp.eu.ngrok.io";
     private static final int PORT = 18881;
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 1) {
-            System.err.println("Uso: java -jar ChatClient.jar <puerto_websocket>");
+        ChatModel model = new ChatModel();
+        int webSocketPort = getAvailablePort();
+
+        if (webSocketPort == -1) {
+            System.err.println("No se pudo encontrar un puerto disponible para el servidor WebSocket");
             System.exit(1);
         }
-
-        ChatModel model = new ChatModel();
-        int webSocketPort = Integer.parseInt(args[0]);
 
         LocalWebSocketServer webSocketServer = new LocalWebSocketServer(webSocketPort, model);
         webSocketServer.start();
@@ -55,6 +58,14 @@ public class ChatClient {
         } finally {
             group.shutdownGracefully();
             webSocketServer.stop();
+        }
+    }
+
+    private static int getAvailablePort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            return socket.getLocalPort();
+        } catch (IOException e) {
+            return -1;
         }
     }
 }

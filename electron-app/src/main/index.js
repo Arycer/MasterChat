@@ -4,23 +4,8 @@ import {electronApp, is, optimizer} from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import path from "node:path";
 import {spawn} from "child_process";
-import net from "node:net";
 
 let javaProcess = null;
-
-function findAvailablePort(startPort = 3000) {
-  return new Promise((resolve) => {
-    const server = net.createServer();
-    server.listen(startPort, () => {
-      const port = server.address().port;
-      server.close(() => resolve(port));
-    });
-
-    server.on("error", () => {
-      resolve(findAvailablePort(startPort + 1)); // Si el puerto está ocupado, probar el siguiente
-    });
-  });
-}
 
 function waitForWebSocketStartup(javaProcess) {
   return new Promise((resolve) => {
@@ -28,8 +13,12 @@ function waitForWebSocketStartup(javaProcess) {
       const output = data.toString();
       console.log(`JAR: ${output}`);
 
-      if (output.includes("Servidor WebSocket iniciado")) {
-        resolve(); // Resuelve la promesa cuando el mensaje aparece
+      // Expresión regular para capturar el puerto desde el mensaje
+      const match = output.match(/Servidor WebSocket iniciado en el puerto (\d+)/);
+
+      if (match) {
+        const port = parseInt(match[1], 10); // Extrae y convierte el puerto a número
+        resolve(port); // Resuelve la promesa con el puerto
       }
     });
 
@@ -75,12 +64,11 @@ app.whenReady().then(async () => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  const port = await findAvailablePort(3000); // Busca un puerto libre a partir del 3000
   const jarPath = is.dev
     ? path.join(__dirname, "../../resources/ChatClient-1.0-SNAPSHOT.jar")  // Ruta en desarrollo
     : path.join(process.resourcesPath, "resources", "ChatClient-1.0-SNAPSHOT.jar"); // Ruta en producción
 
-  javaProcess = spawn("java", ["-jar", jarPath, port.toString()], {
+  javaProcess = spawn("java", ["-jar", jarPath], {
     stdio: ["pipe", "pipe", "pipe"],
   });
 
@@ -97,7 +85,7 @@ app.whenReady().then(async () => {
 
   javaProcess.stdout.on("data", (data) => console.log(`JAR: ${data}`));
   javaProcess.stderr.on("data", (data) => console.error(`JAR Error: ${data}`));
-  await waitForWebSocketStartup(javaProcess);
+  let port = await waitForWebSocketStartup(javaProcess);
 
   ipcMain.on('ping', () => console.log('pong'))
   ipcMain.handle('get-port', () => port);
