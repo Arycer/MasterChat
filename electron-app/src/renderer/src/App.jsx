@@ -20,9 +20,12 @@ function App() {
 
   const notificationSound = new Audio(notificationSoundFile);
 
-  useEffect(async () => {
-    const fetchedPort = await window.api.getPort();
-    setPort(fetchedPort);
+  useEffect(() => {
+    async function fetchPort() {
+      const fetchedPort = await window.api.getPort();
+      setPort(fetchedPort);
+    }
+    fetchPort();
   }, []);
 
   function getCurrentTime() {
