@@ -6,6 +6,8 @@ import path from "node:path";
 import {spawn} from "child_process";
 import net from "node:net";
 
+let javaProcess = null;
+
 function findAvailablePort(startPort = 3000) {
   return new Promise((resolve) => {
     const server = net.createServer();
@@ -78,7 +80,7 @@ app.whenReady().then(async () => {
     ? path.join(__dirname, "../../resources/ChatClient-1.0-SNAPSHOT.jar")  // Ruta en desarrollo
     : path.join(process.resourcesPath, "resources", "ChatClient-1.0-SNAPSHOT.jar"); // Ruta en producción
 
-  const javaProcess = spawn("java", ["-jar", jarPath, port.toString()], {
+  javaProcess = spawn("java", ["-jar", jarPath, port.toString()], {
     stdio: ["pipe", "pipe", "pipe"],
   });
 
@@ -106,6 +108,13 @@ app.whenReady().then(async () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
+
+app.on('before-quit', () => {
+  if (javaProcess) {
+    console.log('Cerrando proceso Java...');
+    javaProcess.kill(); // Mata el proceso Java
+  }
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
