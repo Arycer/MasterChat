@@ -19,6 +19,7 @@ function App() {
   const [ws, setWs] = useState(null);
   const [username, setUsername] = useState(null);
   const [serverList, setServerList] = useState([]);
+  const [discoveryList, setDiscoveryList] = useState([]);
 
   const notificationSound = new Audio(notificationSoundFile);
 
@@ -135,6 +136,20 @@ function App() {
         }
         setServerList(servers);
       }
+
+      if (message.type === 'discovery_list') {
+        console.log('Lista de servidores descubiertos:', message.content);
+
+        // Formato: "address:port|address:port|..."
+        const split = message.content.split('|');
+
+        if (message.content === '') {
+          setDiscoveryList([]);
+          return;
+        }
+
+        setDiscoveryList(split);
+      }
     };
 
     socket.onclose = (event) => {
@@ -239,10 +254,24 @@ function App() {
     }
   }
 
+  function onDirectConnect(server, username) {
+    console.log('Conectar directamente a:', server, username);
+
+    const message = {
+      type: 'direct_connect',
+      receiver: null,
+      content: `${username}:${server.ip}:${server.port}`
+    };
+
+    if (ws) {
+      ws.send(JSON.stringify(message));
+    }
+  }
+
   if (!username) {
     if (!formServer) {
       return (
-        <ServerManager servers={serverList} onConnectServer={onConnectServer} onEditServer={onEditServer} onDeleteServer={onDeleteServer} onAddServer={onAddServer} />
+        <ServerManager servers={serverList} onConnectServer={onConnectServer} onEditServer={onEditServer} onDeleteServer={onDeleteServer} onAddServer={onAddServer} discoveryList={discoveryList} onDirectConnect={onDirectConnect} />
       );
     } else {
       function onSubmit(server) {

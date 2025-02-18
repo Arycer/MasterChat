@@ -135,6 +135,16 @@ public class ChatModel implements ChatListener {
     }
 
     @Override
+    public void connectServer(Server server, Runnable onConnect) {
+        try {
+            ServerManager.INSTANCE.connect(server, this, onConnect);
+        } catch (InterruptedException e) {
+            sendError("connect_failed");
+            System.err.println("Error connecting to server: " + e.getMessage());
+        }
+    }
+
+    @Override
     public void disconnect() {
         ServerManager.INSTANCE.disconnect();
     }

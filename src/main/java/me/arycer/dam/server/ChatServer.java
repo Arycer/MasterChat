@@ -9,6 +9,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
+import me.arycer.dam.server.broadcast.ServerBroadcaster;
 import me.arycer.dam.server.handler.ChatServerHandler;
 
 public class ChatServer {
@@ -17,6 +18,8 @@ public class ChatServer {
     public static void main(String[] args) throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
+        ServerBroadcaster broadcaster = new ServerBroadcaster(PORT);
+        broadcaster.startBroadcasting(); // Iniciar broadcast
 
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
@@ -39,6 +42,7 @@ public class ChatServer {
             System.out.println("Servidor de chat iniciado en el puerto " + PORT);
             future.channel().closeFuture().sync();
         } finally {
+            broadcaster.stopBroadcasting();
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
         }

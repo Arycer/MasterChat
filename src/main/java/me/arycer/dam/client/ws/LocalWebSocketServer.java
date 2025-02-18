@@ -95,6 +95,28 @@ public class LocalWebSocketServer extends WebSocketServer {
                 ServerManager.INSTANCE.loadServers();
                 sendServerList();
             }
+            case "direct_connect" -> {
+                // formato: username:ip:port
+                String[] parts = msg.getContent().split(":");
+                String username = parts[0];
+                String address = parts[1];
+                int port = Integer.parseInt(parts[2]);
+
+                if (this.username != null) {
+                    return;
+                }
+
+                Server server = new Server(username, address, port);
+
+                chatListener.connectServer(server, () -> {
+                    System.out.println("Conectado a servidor: " + server.getName());
+                    this.username = server.getName();
+                    Message connect = new Message();
+                    connect.setType("connect");
+                    connect.setSender(username);
+                    chatListener.sendMessage(connect);
+                });
+            }
         }
     }
 
@@ -152,6 +174,14 @@ public class LocalWebSocketServer extends WebSocketServer {
         Message message = new Message();
         message.setType("server_list");
         message.setContent(servers.toString());
+
+        sendMessageToElectron(message);
+    }
+
+    public void sendServerDiscoveryList(String serverList) {
+        Message message = new Message();
+        message.setType("discovery_list");
+        message.setContent(serverList);
 
         sendMessageToElectron(message);
     }

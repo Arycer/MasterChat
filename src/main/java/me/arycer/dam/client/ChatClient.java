@@ -1,5 +1,6 @@
 package me.arycer.dam.client;
 
+import me.arycer.dam.client.broadcast.ServerDiscovery;
 import me.arycer.dam.client.io.ServerManager;
 import me.arycer.dam.client.model.ChatModel;
 import me.arycer.dam.client.ws.LocalWebSocketServer;
@@ -18,10 +19,13 @@ public class ChatClient {
         }
 
         ServerManager.INSTANCE.loadServers();
+        ServerDiscovery.INSTANCE.startDiscovery();
 
         LocalWebSocketServer webSocketServer = new LocalWebSocketServer(webSocketPort, model);
 
         webSocketServer.start();
+
+        ServerDiscovery.INSTANCE.setWebSocketServer(webSocketServer);
         model.setWebSocketServer(webSocketServer);
     }
 
