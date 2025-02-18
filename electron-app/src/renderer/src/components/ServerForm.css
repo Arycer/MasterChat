@@ -1,0 +1,81 @@
+.server-form {
+  background-color: #fff;
+  padding: 20px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.server-form h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.server-form label {
+  display: block;
+  margin-bottom: 15px;
+  color: #444;
+  font-size: 1rem;
+}
+
+.server-form input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.server-form input:focus {
+  outline: none;
+  border-color: #007BFF;
+  box-shadow: 0 0 3px rgba(0, 123, 255, 0.3);
+}
+
+.button-container {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.server-form button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.cancel-button {
+  background-color: #dc3545;
+  color: white;
+}
+
+.cancel-button:hover {
+  background-color: #c82333;
+}
+
+.server-form button.edit-mode {
+  background-color: #007BFF;
+  color: white;
+}
+
+.server-form button.edit-mode:hover {
+  background-color: #0056b3;
+}
+
+.server-form button:not(.cancel-button) {
+  background-color: #28a745;
+  color: white;
+}
+
+.server-form button:not(.cancel-button):hover {
+  background-color: #218838;
+}

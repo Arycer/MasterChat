@@ -1,0 +1,75 @@
+/* ServerManager Styles */
+.server-manager {
+  background-color: #fff;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.server-manager h2 {
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 1.5rem;
+  text-align: left;
+}
+
+.server-manager ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 20px;
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px); /* Ajusta la altura máxima para permitir el scroll */
+}
+
+.server-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.server-item span {
+  color: #444;
+  font-size: 1rem;
+  flex-grow: 1;
+}
+
+.server-item button {
+  padding: 6px 12px;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-left: 5px;
+}
+
+.server-item button:hover {
+  background-color: #0056b3;
+}
+
+.add-server-button {
+  padding: 12px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}
+
+.add-server-button:hover {
+  background-color: #218838;
+}

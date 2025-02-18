@@ -1,5 +1,7 @@
 package me.arycer.dam.client.ws;
 
+import me.arycer.dam.client.io.Server;
+import me.arycer.dam.client.io.ServerManager;
 import me.arycer.dam.client.model.ChatListener;
 import me.arycer.dam.shared.protocol.Message;
 import me.arycer.dam.shared.utils.MessageUtils;
@@ -27,13 +29,11 @@ public class LocalWebSocketServer extends WebSocketServer {
         System.out.println("Nueva conexión desde: " + conn.getRemoteSocketAddress());
 
         if (username == null) {
-            Message usernameRequest = new Message();
-            usernameRequest.setType("username_request");
-            conn.send(MessageUtils.serialize(usernameRequest));
+            this.sendServerList();
         } else {
             Message session = new Message();
             session.setType("session");
-            session.setContent(username);
+            session.setReceiver(username);
             conn.send(MessageUtils.serialize(session));
 
             Message userList = new Message();
@@ -55,18 +55,40 @@ public class LocalWebSocketServer extends WebSocketServer {
         Message msg = MessageUtils.deserialize(message);
 
         switch (msg.getType()) {
-            case "username_response" -> {
-                if (username == null) {
-                    String username = msg.getContent();
+            case "chat_message" -> chatListener.sendChatMessage(username, msg.getContent());
+            case "private_message" -> chatListener.sendPrivateMessage(username, msg.getReceiver(), msg.getContent());
+            case "add_server" -> chatListener.addServer(msg.getContent());
+            case "edit_server" -> chatListener.editServer(msg.getReceiver(), msg.getContent());
+            case "delete_server" -> chatListener.deleteServer(msg.getReceiver());
+            case "connect_server" -> {
+                System.out.println("Conectando a servidor: " + msg.getReceiver());
+
+                if (username != null) {
+                    return;
+                }
+
+                Server server = ServerManager.INSTANCE.getServer(Integer.parseInt(msg.getReceiver()));
+                if (server == null) {
+                    return;
+                }
+
+                chatListener.connectServer(msg.getReceiver(), () -> {
+                    System.out.println("Conectado a servidor: " + server.getName());
+
+                    this.username = server.getName();
                     Message connect = new Message();
                     connect.setType("connect");
                     connect.setSender(username);
                     chatListener.sendMessage(connect);
-                    this.username = username;
-                }
+                });
             }
-            case "chat_message" -> chatListener.sendChatMessage(username, msg.getContent());
-            case "private_message" -> chatListener.sendPrivateMessage(username, msg.getReceiver(), msg.getContent());
+            case "disconnect" -> {
+                chatListener.disconnect();
+                this.username = null;
+
+                ServerManager.INSTANCE.loadServers();
+                sendServerList();
+            }
         }
     }
 
@@ -80,6 +102,12 @@ public class LocalWebSocketServer extends WebSocketServer {
         System.out.println("Servidor WebSocket iniciado en el puerto " + getPort());
     }
 
+    @Override
+    public void onClosing(WebSocket conn, int code, String reason, boolean remote) {
+        super.onClosing(conn, code, reason, remote);
+        System.out.println("Cerrando conexión: " + conn.getRemoteSocketAddress());
+    }
+
     public void sendMessageToElectron(Message message) {
         for (WebSocket conn : connections) {
             if (conn.isOpen()) {
@@ -90,5 +118,35 @@ public class LocalWebSocketServer extends WebSocketServer {
 
     public void clearUsername() {
         this.username = null;
+    }
+
+    public void sendServerList() {
+        // format: username:address:port|username:address:port...
+        StringBuilder servers = new StringBuilder();
+
+        if (ServerManager.INSTANCE.getCurrentServers().isEmpty()) {
+            Message message = new Message();
+            message.setType("server_list");
+            message.setContent("");
+            sendMessageToElectron(message);
+
+            return;
+        }
+
+        for (Server currentServer : ServerManager.INSTANCE.getCurrentServers()) {
+            String username = currentServer.getName();
+            String address = currentServer.getAddress();
+            int port = currentServer.getPort();
+
+            servers.append(username).append(":").append(address).append(":").append(port).append("|");
+        }
+
+        servers.deleteCharAt(servers.length() - 1);
+
+        Message message = new Message();
+        message.setType("server_list");
+        message.setContent(servers.toString());
+
+        sendMessageToElectron(message);
     }
 }

@@ -9,4 +9,9 @@ public interface ChatListener {
     void sendChatMessage(String username, String content);
     void sendPrivateMessage(String username, String receiver, String content);
     List<String> getConnectedUsers();
+    void addServer(String content);
+    void editServer(String receiver, String content);
+    void deleteServer(String receiver);
+    void connectServer(String receiver, Runnable onConnect);
+    void disconnect();
 }

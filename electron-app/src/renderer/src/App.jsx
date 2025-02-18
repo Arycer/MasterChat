@@ -2,9 +2,11 @@ import {useEffect, useState} from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ChatWindow from './components/ChatWindow';
-import UsernamePrompt from './components/UsernamePrompt';
+import ServerManager from "./components/ServerManager";
+import ServerForm from "./components/ServerForm";
 import notificationSoundFile from './assets/notification.mp3'; // Agrega un sonido en esta ruta
 import './App.css';
+
 
 function App() {
   const [port, setPort] = useState(null);
@@ -16,7 +18,7 @@ function App() {
   const [users, setUsers] = useState([]);
   const [ws, setWs] = useState(null);
   const [username, setUsername] = useState(null);
-  const [isUsernameRequested, setIsUsernameRequested] = useState(false);
+  const [serverList, setServerList] = useState([]);
 
   const notificationSound = new Audio(notificationSoundFile);
 
@@ -47,6 +49,7 @@ function App() {
     if (port === null) return;
 
     const socket = new WebSocket(`ws://localhost:${port}`);
+    console.log('Conectando al servidor WebSocket...' + port);
 
     socket.onopen = () => {
       console.log('Conectado al servidor WebSocket');
@@ -100,17 +103,37 @@ function App() {
         setUsers(message.content.split(','));
       }
 
-      if (message.type === 'username_request') {
-        setIsUsernameRequested(true);
-      }
-
       if (message.type === 'session') {
-        setUsername(message.content);
-        setIsUsernameRequested(false);
+        console.log('Sesión iniciada con el nombre de usuario:', message.receiver);
+        setUsername(message.receiver);
+        setIsEdit(false);
+        setFormServer(null);
       }
 
       if (message.type === 'error' && message.content === 'already_existing_username') {
         alert('El nombre de usuario ya está en uso. Por favor, elige otro.');
+      }
+
+      if (message.type === 'server_list') {
+        // Formato: "username:address:port|username:address:port|..."
+        const split = message.content.split('|');
+        const servers = [];
+
+        if (message.content === '') {
+          setServerList([]);
+          return;
+        }
+
+        for (let i = 0; i < split.length; i++) {
+          const server = split[i].split(':');
+          servers.push({
+            index: i,
+            username: server[0],
+            ip: server[1],
+            port: server[2]
+          });
+        }
+        setServerList(servers);
       }
     };
 
@@ -128,12 +151,6 @@ function App() {
       socket.close();
     };
   }, [port, username, activeTab]);
-
-  const sendUsername = (username) => {
-    if (ws) {
-      ws.send(JSON.stringify({ type: 'username_response', content: username }));
-    }
-  };
 
   const openPrivateChat = (name) => {
     if (name === username) return;
@@ -157,16 +174,103 @@ function App() {
     }
   };
 
+  function onConnectServer(server) {
+    console.log('Conectar a:', server);
+
+    const message = {
+      type: 'connect_server',
+      receiver: server.index,
+      content: ''
+    };
+
+    if (ws) {
+      ws.send(JSON.stringify(message));
+    }
+  }
+
+  function onEditServer(server) {
+    console.log('Editar:', server);
+    setFormServer(server);
+    setIsEdit(true);
+  }
+
+  function onDeleteServer(server) {
+    console.log('Borrar:', server);
+
+    const message = {
+      type: 'delete_server',
+      receiver: server.index,
+      content: ''
+    };
+
+    if (ws) {
+      ws.send(JSON.stringify(message));
+    }
+  }
+
+  const [ formServer, setFormServer ] = useState(null);
+  const [ isEdit, setIsEdit ] = useState(false);
+
+  function onAddServer() {
+    console.log('Añadir Servidor');
+    setFormServer({
+      username: '',
+      ip: '',
+      port: ''
+    });
+    setIsEdit(false);
+  }
+
   if (!username) {
-    return (
-      <div className="app">
-        {isUsernameRequested ? (
-          <UsernamePrompt onUsernameSubmit={sendUsername} />
-        ) : (
-          <div className="loading">Conectando...</div>
-        )}
-      </div>
-    );
+    if (!formServer) {
+      return (
+        <ServerManager servers={serverList} onConnectServer={onConnectServer} onEditServer={onEditServer} onDeleteServer={onDeleteServer} onAddServer={onAddServer} />
+      );
+    } else {
+      function onSubmit(server) {
+        // Formato: username:address:port
+        console.log('Submit:', server);
+
+        const serverStr = `${server.username}:${server.ip}:${server.port}`;
+        const message = {
+          type: isEdit ? 'edit_server' : 'add_server',
+          receiver: isEdit ? formServer.index : null,
+          content: serverStr
+        };
+
+        if (ws) {
+          ws.send(JSON.stringify(message));
+        }
+
+        setFormServer(null);
+        setIsEdit(false);
+      }
+
+      function onCancel() {
+        setFormServer(null);
+        setIsEdit(false);
+      }
+
+      return <ServerForm server={formServer} onSubmit={onSubmit} onCancel={onCancel} />;
+    }
+  }
+
+  function onDisconnect() {
+    const message = {
+      type: 'disconnect'
+    };
+
+    if (ws) {
+      ws.send(JSON.stringify(message));
+    }
+
+    setUsername(null);
+    setMessages([]);
+    setPrivateMessages({});
+    setUnreadMessages({});
+    setUsers([]);
+    setOpenTabs(['general']);
+    setActiveTab('general');
   }
 
   return (
@@ -177,6 +281,7 @@ function App() {
         unreadMessages={unreadMessages}
         onTabClick={clickTab}
         onCloseTab={closeChat}
+        onDisconnect={onDisconnect}
       />
       <div className="main-content">
         <Sidebar users={users} onUserClick={openPrivateChat} currentUser={username} />

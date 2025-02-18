@@ -10,9 +10,11 @@ import java.util.Arrays;
 
 public class ChatClientHandler extends SimpleChannelInboundHandler<String> {
     private final ChatModel model;
+    private final Runnable onConnect;
 
-    public ChatClientHandler(ChatModel model) {
+    public ChatClientHandler(ChatModel model, Runnable onConnect) {
         this.model = model;
+        this.onConnect = onConnect;
     }
 
     // Mensajes recibidos del servidor Netty
@@ -38,6 +40,7 @@ public class ChatClientHandler extends SimpleChannelInboundHandler<String> {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         model.setChannelHandlerContext(ctx);
+        onConnect.run();
     }
 
     @Override
