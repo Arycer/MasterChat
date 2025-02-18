@@ -7,8 +7,11 @@ WORKDIR /app
 # Copia el archivo JAR de tu aplicación al contenedor
 COPY build/libs/ChatServer-1.0-SNAPSHOT.jar /app/ChatServer.jar
 
-# Expone el puerto en el que tu servidor escuchará (por ejemplo, 8080)
-EXPOSE 8080
+# Define una variable de entorno para el puerto con un valor predeterminado
+ENV SERVER_PORT=8080
+
+# Expone el puerto en el que tu servidor escuchará
+EXPOSE $SERVER_PORT
 
 # Define el comando para ejecutar tu aplicación
 CMD ["java", "-jar", "ChatServer.jar"]

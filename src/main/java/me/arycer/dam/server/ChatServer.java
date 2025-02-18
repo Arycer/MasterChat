@@ -13,12 +13,22 @@ import me.arycer.dam.server.broadcast.ServerBroadcaster;
 import me.arycer.dam.server.handler.ChatServerHandler;
 
 public class ChatServer {
-    private static final int PORT = 8080;
-
     public static void main(String[] args) throws Exception {
+        String portEnv = System.getenv("SERVER_PORT");
+        int port = 8080; // Valor predeterminado
+
+        // Si la variable de entorno está definida, úsala
+        if (portEnv != null && !portEnv.isEmpty()) {
+            try {
+                port = Integer.parseInt(portEnv);
+            } catch (NumberFormatException e) {
+                System.err.println("El valor de SERVER_PORT no es un número válido. Usando el puerto predeterminado 8080.");
+            }
+        }
+
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        ServerBroadcaster broadcaster = new ServerBroadcaster(PORT);
+        ServerBroadcaster broadcaster = new ServerBroadcaster(port);
         broadcaster.startBroadcasting(); // Iniciar broadcast
 
         try {
@@ -38,8 +48,8 @@ public class ChatServer {
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-            ChannelFuture future = bootstrap.bind(PORT).sync();
-            System.out.println("Servidor de chat iniciado en el puerto " + PORT);
+            ChannelFuture future = bootstrap.bind(port).sync();
+            System.out.println("Servidor de chat iniciado en el puerto " + port);
             future.channel().closeFuture().sync();
         } finally {
             broadcaster.stopBroadcasting();
