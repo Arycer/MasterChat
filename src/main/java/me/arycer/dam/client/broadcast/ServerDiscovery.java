@@ -3,8 +3,8 @@ package me.arycer.dam.client.broadcast;
 import me.arycer.dam.client.ws.LocalWebSocketServer;
 
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -33,9 +33,9 @@ public class ServerDiscovery {
     }
 
     private void discover() {
-        try (MulticastSocket socket = new MulticastSocket(4445)) {  // Usar MulticastSocket para escuchar en el mismo puerto
-            InetAddress group = InetAddress.getByName("230.0.0.0"); // Dirección multicast
-            socket.joinGroup(group);  // Unir el socket al grupo multicast
+        try (DatagramSocket socket = new DatagramSocket(4445)) {  // Usar DatagramSocket para recibir en el mismo puerto
+            socket.setBroadcast(true); // Permitir el uso de broadcast
+
             byte[] buffer = new byte[1024];
 
             while (running) {
