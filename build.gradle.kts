@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     id("java")
     id("application")
@@ -12,7 +14,8 @@ repositories {
 }
 
 application {
-    mainClass.set("me.arycer.dam.client.ChatClient") // Usa set() en Kotlin DSL
+    // Configura la clase principal para el cliente
+    mainClass.set("me.arycer.dam.client.ChatClient")
 }
 
 dependencies {
@@ -24,22 +27,35 @@ dependencies {
     implementation("org.java-websocket:Java-WebSocket:1.5.1")
 }
 
-tasks.jar {
-    manifest {
-        attributes["Main-Class"] = application.mainClass.get() // Usa get() en Kotlin DSL
-    }
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
-
-tasks.shadowJar {
+// Tarea para generar el JAR del cliente con dependencias empaquetadas
+task<ShadowJar>("shadowClient") {
     archiveBaseName.set("ChatClient")
-    archiveClassifier.set("") // Quita el sufijo "-all" para evitar confusión
+    archiveClassifier.set("") // No clasificadores
     archiveVersion.set(version as String)
 
+    from(sourceSets.main.get().output) // Incluye las clases del cliente
+    from(project.configurations.getByName("runtimeClasspath")) // Incluye las dependencias del cliente
+
     manifest {
-        attributes["Main-Class"] = application.mainClass.get()
+        attributes["Main-Class"] = application.mainClass.get() // Clase principal del cliente
     }
+}
+
+// Tarea para generar el JAR del servidor con dependencias empaquetadas
+task<ShadowJar>("shadowServer") {
+    archiveBaseName.set("ChatServer")
+    archiveClassifier.set("") // No clasificadores
+    archiveVersion.set(version as String)
+
+    from(sourceSets.main.get().output) // Incluye las clases del servidor
+    from(project.configurations.getByName("runtimeClasspath")) // Incluye las dependencias del servidor
+
+    manifest {
+        attributes["Main-Class"] = "me.arycer.dam.server.ChatServer" // Clase principal del servidor
+    }
+}
+
+// Tarea personalizada que depende de shadowJar para ambos
+task("buildAll") {
+    dependsOn("shadowClient", "shadowServer") // Dependiendo de las tareas shadow para cliente y servidor
 }
