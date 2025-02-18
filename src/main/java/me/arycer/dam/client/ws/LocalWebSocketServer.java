@@ -28,6 +28,11 @@ public class LocalWebSocketServer extends WebSocketServer {
         connections.add(conn);
         System.out.println("Nueva conexión desde: " + conn.getRemoteSocketAddress());
 
+        Message test = new Message();
+        test.setType("test_ping");
+        System.out.println("Sending test ping");
+        conn.send(MessageUtils.serialize(test));
+
         if (username == null) {
             this.sendServerList();
         } else {
@@ -60,6 +65,7 @@ public class LocalWebSocketServer extends WebSocketServer {
             case "add_server" -> chatListener.addServer(msg.getContent());
             case "edit_server" -> chatListener.editServer(msg.getReceiver(), msg.getContent());
             case "delete_server" -> chatListener.deleteServer(msg.getReceiver());
+            case "test-pong" -> System.out.println("Received test pong");
             case "connect_server" -> {
                 System.out.println("Conectando a servidor: " + msg.getReceiver());
 

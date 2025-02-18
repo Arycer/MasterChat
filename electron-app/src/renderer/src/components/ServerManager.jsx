@@ -6,6 +6,9 @@ function ServerManager({ onConnectServer, onEditServer, onDeleteServer, onAddSer
     <div className="server-manager">
       <h2>Servidores de Chat</h2>
       <ul>
+        <li className="servers-desc">
+          <span>Nombre de Usuario - IP - Puerto</span>
+        </li>
         {servers.map((server, index) => (
           <li key={index} className="server-item">
             <span>{server.username} - {server.ip} - {server.port}</span>

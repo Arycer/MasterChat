@@ -11,8 +11,6 @@ function waitForWebSocketStartup(javaProcess) {
   return new Promise((resolve) => {
     javaProcess.stdout.on("data", (data) => {
       const output = data.toString();
-      console.log(`JAR: ${output}`);
-
       // Expresión regular para capturar el puerto desde el mensaje
       const match = output.match(/Servidor WebSocket iniciado en el puerto (\d+)/);
 
@@ -71,9 +69,6 @@ app.whenReady().then(async () => {
   javaProcess = spawn("java", ["-jar", jarPath], {
     stdio: ["pipe", "pipe", "pipe"],
   });
-
-  javaProcess.stdout.on("data", (data) => console.log(`JAR: ${data}`));
-  javaProcess.stderr.on("data", (data) => console.error(`JAR Error: ${data}`));
 
   javaProcess.on("exit", (code, signal) => {
     console.error(`El proceso Java se cerró con código: ${code}, señal: ${signal}`);

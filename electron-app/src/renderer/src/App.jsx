@@ -221,6 +221,24 @@ function App() {
     setIsEdit(false);
   }
 
+  function onDisconnect() {
+    setUsername(null);
+    setMessages([]);
+    setPrivateMessages({});
+    setUnreadMessages({});
+    setUsers([]);
+    setOpenTabs(['general']);
+    setActiveTab('general');
+
+    const message = {
+      type: 'disconnect'
+    };
+
+    if (ws) {
+      ws.send(JSON.stringify(message));
+    }
+  }
+
   if (!username) {
     if (!formServer) {
       return (
@@ -253,24 +271,6 @@ function App() {
 
       return <ServerForm server={formServer} onSubmit={onSubmit} onCancel={onCancel} />;
     }
-  }
-
-  function onDisconnect() {
-    const message = {
-      type: 'disconnect'
-    };
-
-    if (ws) {
-      ws.send(JSON.stringify(message));
-    }
-
-    setUsername(null);
-    setMessages([]);
-    setPrivateMessages({});
-    setUnreadMessages({});
-    setUsers([]);
-    setOpenTabs(['general']);
-    setActiveTab('general');
   }
 
   return (
